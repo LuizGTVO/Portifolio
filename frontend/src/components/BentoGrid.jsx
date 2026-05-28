@@ -208,15 +208,18 @@ export default function BentoGrid() {
   const [commitGrid, setCommitGrid] = useState(() => Array(96).fill(0));
   
   useEffect(() => {
-    setCommitGrid(
-      Array.from({ length: 96 }, () => {
-        const rand = Math.random();
-        if (rand < 0.5) return 0;
-        if (rand < 0.75) return 1;
-        if (rand < 0.9) return 2;
-        return 3;
-      })
-    );
+    const timeout = setTimeout(() => {
+      setCommitGrid(
+        Array.from({ length: 96 }, () => {
+          const rand = Math.random();
+          if (rand < 0.5) return 0;
+          if (rand < 0.75) return 1;
+          if (rand < 0.9) return 2;
+          return 3;
+        })
+      );
+    }, 0);
+    return () => clearTimeout(timeout);
   }, []);
 
   return (

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { personalInfo, projects } from "@/data/portfolioData";
 import CustomCursor from "@/components/CustomCursor";
 import { 
@@ -168,17 +169,13 @@ export default function LinktreePage() {
             }}
             className="self-start"
           >
-            <a
+            <Link
               href="/"
-              onClick={(e) => {
-                e.preventDefault();
-                window.location.href = "/";
-              }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/5 bg-white/[0.01] hover:bg-white/5 text-xs font-semibold text-zinc-400 hover:text-white transition-all duration-300 hover:border-white/10"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Voltar ao Portfólio
-            </a>
+            </Link>
           </motion.div>
 
           {/* Profile Header */}

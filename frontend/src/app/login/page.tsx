@@ -8,6 +8,7 @@ import { login } from "@/app/auth/actions";
 import { Lock, Mail, Loader2, ArrowLeft } from "lucide-react";
 import CustomCursor from "@/components/CustomCursor";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
@@ -53,13 +54,13 @@ export default function LoginPage() {
         >
           {/* Back button */}
           <div className="self-start">
-            <a
+            <Link
               href="/"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/5 bg-white/[0.01] hover:bg-white/5 text-xs font-semibold text-zinc-400 hover:text-white transition-all duration-300"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Voltar ao Portfólio
-            </a>
+            </Link>
           </div>
 
           {/* Form Card */}
@@ -142,9 +143,9 @@ export default function LoginPage() {
               {/* Toggle to register */}
               <p className="text-xs text-center text-zinc-500 mt-2">
                 Não tem uma conta?{" "}
-                <a href="/register" className="text-indigo-400 hover:text-indigo-300 hover:underline transition-colors font-medium">
+                <Link href="/register" className="text-indigo-400 hover:text-indigo-300 hover:underline transition-colors font-medium">
                   Cadastre-se aqui
-                </a>
+                </Link>
               </p>
             </div>
           </div>

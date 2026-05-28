@@ -63,7 +63,10 @@ export default function Profile() {
   useEffect(() => {
     let isMounted = true;
     let index = 0;
-    setTypedCode("");
+    
+    const timeout = setTimeout(() => {
+      if (isMounted) setTypedCode("");
+    }, 0);
 
     const interval = setInterval(() => {
       if (!isMounted) return;
@@ -79,9 +82,10 @@ export default function Profile() {
 
     return () => {
       isMounted = false;
+      clearTimeout(timeout);
       clearInterval(interval);
     };
-  }, [resetKey]);
+  }, [resetKey, codeText]);
 
   // Card 3D tilt tracking
   const handleMouseMove = (e) => {
@@ -215,7 +219,7 @@ export default function Hero() {
   const [phraseIdx, setPhraseIdx] = useState(0);
   const [subIdx, setSubIdx] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [typedText, setTypedText] = useState("");
+  const typedText = typingPhrases[phraseIdx].substring(0, subIdx);
 
   useEffect(() => {
     if (subIdx === typingPhrases[phraseIdx].length + 1 && !isDeleting) {
@@ -224,9 +228,11 @@ export default function Hero() {
     }
 
     if (subIdx === 0 && isDeleting) {
-      setIsDeleting(false);
-      setPhraseIdx((prev) => (prev + 1) % typingPhrases.length);
-      return;
+      const timeout = setTimeout(() => {
+        setIsDeleting(false);
+        setPhraseIdx((prev) => (prev + 1) % typingPhrases.length);
+      }, 0);
+      return () => clearTimeout(timeout);
     }
 
     const timeout = setTimeout(
@@ -238,10 +244,6 @@ export default function Hero() {
 
     return () => clearTimeout(timeout);
   }, [subIdx, isDeleting, phraseIdx, typingPhrases]);
-
-  useEffect(() => {
-    setTypedText(typingPhrases[phraseIdx].substring(0, subIdx));
-  }, [subIdx, phraseIdx, typingPhrases]);
 
   // 2. Mouse move handler for coordinates and spotlights
   const handleMouseMove = (e) => {
@@ -263,16 +265,19 @@ export default function Hero() {
   const [backgroundParticles, setBackgroundParticles] = useState([]);
 
   useEffect(() => {
-    setBackgroundParticles(
-      Array.from({ length: 25 }).map((_, i) => ({
-        id: i,
-        size: Math.random() * 2.2 + 0.8,
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        duration: Math.random() * 12 + 10,
-        delay: Math.random() * -15, // Negative offset to start pre-populated across viewport
-      }))
-    );
+    const timeout = setTimeout(() => {
+      setBackgroundParticles(
+        Array.from({ length: 25 }).map((_, i) => ({
+          id: i,
+          size: Math.random() * 2.2 + 0.8,
+          left: Math.random() * 100,
+          top: Math.random() * 100,
+          duration: Math.random() * 12 + 10,
+          delay: Math.random() * -15, // Negative offset to start pre-populated across viewport
+        }))
+      );
+    }, 0);
+    return () => clearTimeout(timeout);
   }, []);
 
   const containerVariants = {

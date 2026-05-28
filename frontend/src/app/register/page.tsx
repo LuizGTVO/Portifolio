@@ -8,6 +8,7 @@ import { signup } from "@/app/auth/actions";
 import { User, Lock, Mail, Loader2, ArrowLeft, CheckCircle } from "lucide-react";
 import CustomCursor from "@/components/CustomCursor";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
@@ -57,13 +58,13 @@ export default function RegisterPage() {
         >
           {/* Back button */}
           <div className="self-start">
-            <a
+            <Link
               href="/login"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/5 bg-white/[0.01] hover:bg-white/5 text-xs font-semibold text-zinc-400 hover:text-white transition-all duration-300"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Voltar ao Login
-            </a>
+            </Link>
           </div>
 
           {/* Form Card */}
@@ -84,12 +85,12 @@ export default function RegisterPage() {
                       {success}
                     </p>
                   </div>
-                  <a
+                  <Link
                     href="/login"
                     className="w-full flex items-center justify-center gap-2 px-6 py-3.5 mt-2 rounded-xl bg-white text-black font-semibold text-sm hover:bg-zinc-200 hover:shadow-[0_0_20px_rgba(99,102,241,0.25)] transition-all duration-300"
                   >
                     Ir para o Login
-                  </a>
+                  </Link>
                 </div>
               ) : (
                 // Form screen
@@ -210,9 +211,9 @@ export default function RegisterPage() {
                   {/* Toggle to login */}
                   <p className="text-xs text-center text-zinc-500 mt-2">
                     Já tem uma conta?{" "}
-                    <a href="/login" className="text-indigo-400 hover:text-indigo-300 hover:underline transition-colors font-medium">
+                    <Link href="/login" className="text-indigo-400 hover:text-indigo-300 hover:underline transition-colors font-medium">
                       Faça login aqui
-                    </a>
+                    </Link>
                   </p>
                 </>
               )}
