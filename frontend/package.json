@@ -6,10 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
+    "@prisma/client": "^5.12.1",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.2",
     "clsx": "^2.1.1",
@@ -27,6 +29,7 @@
     "@types/react": "19.2.15",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "prisma": "^5.12.1",
     "tailwindcss": "^4"
   }
 }
