@@ -13,37 +13,37 @@ async function checkAdmin() {
 }
 
 export async function createProject(formData: FormData) {
-  const isAdmin = await checkAdmin();
-  if (!isAdmin) {
-    return { success: false, error: "Não autorizado." };
-  }
-
-  const rawTitle = formData.get("title") as string;
-  const rawDescription = formData.get("description") as string;
-  const rawGithubUrl = formData.get("githubUrl") as string;
-  const rawLiveUrl = formData.get("liveUrl") as string;
-  const rawTechnologies = formData.get("technologies") as string;
-  const rawFeatured = formData.get("featured") === "true";
-  const imageFile = formData.get("image") as File;
-
-  const validation = projectSchema.safeParse({
-    title: rawTitle,
-    description: rawDescription,
-    githubUrl: rawGithubUrl || "",
-    liveUrl: rawLiveUrl || "",
-    technologies: rawTechnologies,
-    featured: rawFeatured,
-  });
-
-  if (!validation.success) {
-    return { success: false, error: "Dados inválidos no formulário." };
-  }
-
-  if (!imageFile || imageFile.size === 0) {
-    return { success: false, error: "Por favor, envie uma imagem do projeto." };
-  }
-
   try {
+    const isAdmin = await checkAdmin();
+    if (!isAdmin) {
+      return { success: false, error: "Não autorizado." };
+    }
+
+    const rawTitle = formData.get("title") as string;
+    const rawDescription = formData.get("description") as string;
+    const rawGithubUrl = formData.get("githubUrl") as string;
+    const rawLiveUrl = formData.get("liveUrl") as string;
+    const rawTechnologies = formData.get("technologies") as string;
+    const rawFeatured = formData.get("featured") === "true";
+    const imageFile = formData.get("image") as File;
+
+    const validation = projectSchema.safeParse({
+      title: rawTitle,
+      description: rawDescription,
+      githubUrl: rawGithubUrl || "",
+      liveUrl: rawLiveUrl || "",
+      technologies: rawTechnologies,
+      featured: rawFeatured,
+    });
+
+    if (!validation.success) {
+      return { success: false, error: "Dados inválidos no formulário." };
+    }
+
+    if (!imageFile || imageFile.size === 0) {
+      return { success: false, error: "Por favor, envie uma imagem do projeto." };
+    }
+
     const supabase = await createClient();
 
     // 1. Upload image to Supabase Storage bucket "projects"
@@ -85,38 +85,38 @@ export async function createProject(formData: FormData) {
     return { success: true, project };
   } catch (err: any) {
     console.error("Erro ao criar projeto:", err);
-    return { success: false, error: "Erro interno no servidor ao cadastrar projeto." };
+    return { success: false, error: err?.message || "Erro interno no servidor ao cadastrar projeto." };
   }
 }
 
 export async function updateProject(projectId: string, formData: FormData) {
-  const isAdmin = await checkAdmin();
-  if (!isAdmin) {
-    return { success: false, error: "Não autorizado." };
-  }
-
-  const rawTitle = formData.get("title") as string;
-  const rawDescription = formData.get("description") as string;
-  const rawGithubUrl = formData.get("githubUrl") as string;
-  const rawLiveUrl = formData.get("liveUrl") as string;
-  const rawTechnologies = formData.get("technologies") as string;
-  const rawFeatured = formData.get("featured") === "true";
-  const imageFile = formData.get("image") as File;
-
-  const validation = projectSchema.safeParse({
-    title: rawTitle,
-    description: rawDescription,
-    githubUrl: rawGithubUrl || "",
-    liveUrl: rawLiveUrl || "",
-    technologies: rawTechnologies,
-    featured: rawFeatured,
-  });
-
-  if (!validation.success) {
-    return { success: false, error: "Dados inválidos no formulário." };
-  }
-
   try {
+    const isAdmin = await checkAdmin();
+    if (!isAdmin) {
+      return { success: false, error: "Não autorizado." };
+    }
+
+    const rawTitle = formData.get("title") as string;
+    const rawDescription = formData.get("description") as string;
+    const rawGithubUrl = formData.get("githubUrl") as string;
+    const rawLiveUrl = formData.get("liveUrl") as string;
+    const rawTechnologies = formData.get("technologies") as string;
+    const rawFeatured = formData.get("featured") === "true";
+    const imageFile = formData.get("image") as File;
+
+    const validation = projectSchema.safeParse({
+      title: rawTitle,
+      description: rawDescription,
+      githubUrl: rawGithubUrl || "",
+      liveUrl: rawLiveUrl || "",
+      technologies: rawTechnologies,
+      featured: rawFeatured,
+    });
+
+    if (!validation.success) {
+      return { success: false, error: "Dados inválidos no formulário." };
+    }
+
     const supabase = await createClient();
 
     const existingProject = await prisma.project.findUnique({
@@ -180,7 +180,7 @@ export async function updateProject(projectId: string, formData: FormData) {
     return { success: true, project: updatedProject };
   } catch (err: any) {
     console.error("Erro ao atualizar projeto:", err);
-    return { success: false, error: "Erro interno no servidor ao atualizar o projeto." };
+    return { success: false, error: err?.message || "Erro interno no servidor ao atualizar o projeto." };
   }
 }
 

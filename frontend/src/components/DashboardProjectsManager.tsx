@@ -114,7 +114,8 @@ export default function DashboardProjectsManager({ initialProjects }: Props) {
           setError(res.error || "Ocorreu um erro ao salvar o projeto.");
         }
       } catch (err: any) {
-        setError("Erro ao se conectar com o servidor.");
+        console.error("Erro ao salvar projeto:", err);
+        setError(`Erro ao se conectar com o servidor: ${err?.message || err}`);
       }
     });
   };
