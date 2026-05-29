@@ -21,38 +21,72 @@ export default function Contact() {
     e.preventDefault();
     if (!formState.name || !formState.email || !formState.message) return;
 
+    // Validações básicas no cliente antes do envio
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const newErrors = {};
+    if (formState.name.trim().length < 2) {
+      newErrors.name = ["O nome deve ter pelo menos 2 caracteres."];
+    }
+    if (!emailRegex.test(formState.email.trim())) {
+      newErrors.email = ["Por favor, insira um e-mail válido."];
+    }
+    if (formState.message.trim().length < 10) {
+      newErrors.message = ["A mensagem deve ter pelo menos 10 caracteres."];
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setErrorMessage("Corrija as inconsistências do formulário.");
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 5000);
+      return;
+    }
+
     setStatus("sending");
     setErrors({});
 
     try {
-      const response = await fetch("/api/contact", {
+      // 1. Salva no banco de dados (chama a rota local silenciosamente no background)
+      fetch("/api/contact", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formState),
+      }).catch((dbErr) => console.warn("Banco de dados indisponível:", dbErr));
+
+      // 2. Dispara o e-mail real direto do navegador do usuário (ignora bloqueios de firewall da Vercel)
+      const response = await fetch("https://formsubmit.co/ajax/luizgmenino@gmail.com", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          name: formState.name,
+          email: formState.email,
+          message: formState.message,
+          _subject: `Novo Contato do Portfólio: ${formState.name}`,
+        }),
       });
 
       const data = await response.json();
 
-      if (response.ok && data.success) {
+      if (response.ok && (data.success === "true" || data.success === true)) {
         setStatus("success");
         setFormState({ name: "", email: "", message: "" });
       } else {
         console.error("Erro no envio:", data.message || "Erro desconhecido");
-        setErrorMessage(data.message || "Erro ao enviar. Tente novamente!");
-        if (data.errors) {
-          setErrors(data.errors);
-        }
+        setErrorMessage(data.message || "Erro ao enviar e-mail. Tente novamente.");
         setStatus("error");
       }
     } catch (err) {
       console.error("Erro de rede:", err);
-      setErrorMessage("Erro de rede. Tente novamente.");
+      setErrorMessage("Erro de rede. Verifique sua conexão.");
       setStatus("error");
     }
 
-    // Reset status after a few seconds
+    // Reset status após alguns segundos
     setTimeout(() => {
       setStatus("idle");
     }, 5000);
