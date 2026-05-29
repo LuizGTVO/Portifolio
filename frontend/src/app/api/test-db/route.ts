@@ -29,14 +29,39 @@ export async function GET() {
     };
   }
 
-  // Test Supabase connection / initialization
+  // Test Supabase connection / initialization / upload
   try {
     const supabase = await createClient();
-    const { data, error } = await supabase.storage.listBuckets();
-    if (error) {
-      results.supabase = { success: false, message: error.message };
+    const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
+    
+    if (bucketError) {
+      results.supabase = { success: false, message: bucketError.message };
     } else {
-      results.supabase = { success: true, message: "Conectado ao Supabase Storage com sucesso!", buckets: data.map(b => b.name) };
+      // Try a test upload
+      const testFileName = `test_upload_${Date.now()}.txt`;
+      const testFileContent = "test connection";
+      const { error: uploadError } = await supabase.storage
+        .from("projects")
+        .upload(testFileName, Buffer.from(testFileContent), {
+          contentType: "text/plain",
+          duplex: "half",
+        } as any);
+
+      if (uploadError) {
+        results.supabase = {
+          success: false,
+          message: `Conectou, listou buckets [${buckets.map(b => b.name).join(", ")}], mas FALHOU no upload para o bucket 'projects': ${uploadError.message}`,
+          errorDetails: uploadError,
+        };
+      } else {
+        // Clean up
+        await supabase.storage.from("projects").remove([testFileName]);
+        results.supabase = {
+          success: true,
+          message: "Conectado ao Supabase Storage e Upload testado com SUCESSO!",
+          buckets: buckets.map(b => b.name),
+        };
+      }
     }
   } catch (err: any) {
     results.supabase = {
