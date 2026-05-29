@@ -101,12 +101,11 @@ export async function POST(request: NextRequest) {
     // 2. Disparar notificação por e-mail usando Nodemailer SMTP (bloqueante para checagem de sucesso)
     const emailSent = await sendContactNotification(name, email, message);
 
-    // Se ambos falharem (banco fora do ar AND falha no envio do email), aí sim retornamos erro 500
-    if (!savedMessage && !emailSent) {
+    if (!emailSent) {
       return NextResponse.json(
         { 
           success: false, 
-          message: "Não foi possível enviar a mensagem. O banco de dados está indisponível e o envio de e-mail falhou." 
+          message: "O envio do e-mail falhou. Verifique as credenciais SMTP no painel da hospedagem." 
         },
         { status: 500 }
       );

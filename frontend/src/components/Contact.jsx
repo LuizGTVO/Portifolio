@@ -10,6 +10,7 @@ export default function Contact() {
   const [formState, setFormState] = useState({ name: "", email: "", message: "" });
   const [status, setStatus] = useState("idle"); // idle | sending | success | error
   const [errors, setErrors] = useState({}); // validation errors
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -39,6 +40,7 @@ export default function Contact() {
         setFormState({ name: "", email: "", message: "" });
       } else {
         console.error("Erro no envio:", data.message || "Erro desconhecido");
+        setErrorMessage(data.message || "Erro ao enviar. Tente novamente!");
         if (data.errors) {
           setErrors(data.errors);
         }
@@ -46,6 +48,7 @@ export default function Contact() {
       }
     } catch (err) {
       console.error("Erro de rede:", err);
+      setErrorMessage("Erro de rede. Tente novamente.");
       setStatus("error");
     }
 
@@ -247,9 +250,9 @@ export default function Contact() {
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 text-xs"
                       >
-                        Erro ao enviar. Tente novamente!
+                        {errorMessage}
                       </motion.span>
                     )}
                   </AnimatePresence>
