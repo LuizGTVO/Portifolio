@@ -9,6 +9,16 @@ export default function FloatingNav() {
   const [activeSection, setActiveSection] = useState("home");
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = () => {
+      setIsAdmin(document.cookie.includes("admin_session=admluiz"));
+    };
+    checkAdmin();
+    window.addEventListener("focus", checkAdmin);
+    return () => window.removeEventListener("focus", checkAdmin);
+  }, []);
 
   useEffect(() => {
     // 1. Scroll effect for navbar styling
@@ -112,12 +122,32 @@ export default function FloatingNav() {
               );
             })}
           </nav>
-          <a
-            href="/login"
-            className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/10 transition-all duration-300"
-          >
-            Painel
-          </a>
+          {isAdmin ? (
+            <div className="flex items-center gap-2">
+              <a
+                href="/dashboard"
+                className="px-4 py-1.5 rounded-full bg-indigo-600 border border-indigo-500 text-xs font-semibold text-white hover:bg-indigo-500 transition-all duration-300"
+              >
+                Painel Admin
+              </a>
+              <button
+                onClick={() => {
+                  document.cookie = "admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+                  window.location.href = "/";
+                }}
+                className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-semibold text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/20 transition-all duration-300 cursor-pointer"
+              >
+                Sair Admin
+              </button>
+            </div>
+          ) : (
+            <a
+              href="/login"
+              className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/10 transition-all duration-300"
+            >
+              Modo Admin
+            </a>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -150,12 +180,32 @@ export default function FloatingNav() {
                 {link.label}
               </a>
             ))}
-            <a
-              href="/login"
-              className="text-indigo-400 hover:text-indigo-300 text-lg py-2 font-semibold text-center mt-2 border-t border-white/5 pt-4"
-            >
-              Acesso Administrativo (Painel)
-            </a>
+            {isAdmin ? (
+              <>
+                <a
+                  href="/dashboard"
+                  className="text-indigo-400 hover:text-indigo-300 text-lg py-2 font-semibold text-center mt-2 border-t border-white/5 pt-4"
+                >
+                  Painel Admin (CRUD)
+                </a>
+                <button
+                  onClick={() => {
+                    document.cookie = "admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+                    window.location.href = "/";
+                  }}
+                  className="text-rose-400 hover:text-rose-300 text-lg py-2 font-semibold text-center cursor-pointer"
+                >
+                  Sair Modo Admin
+                </button>
+              </>
+            ) : (
+              <a
+                href="/login"
+                className="text-indigo-400 hover:text-indigo-300 text-lg py-2 font-semibold text-center mt-2 border-t border-white/5 pt-4"
+              >
+                Modo Admin
+              </a>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

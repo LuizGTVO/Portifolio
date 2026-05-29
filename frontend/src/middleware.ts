@@ -1,58 +1,27 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { updateSession } from "@/utils/supabase/middleware";
-import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(request: NextRequest) {
-  const { supabaseResponse, user } = await updateSession(request);
   const path = request.nextUrl.pathname;
+  const adminSession = request.cookies.get("admin_session")?.value;
+  const isAdmin = adminSession === "admluiz";
 
   // Protect dashboard and admin routes
   if (path.startsWith("/dashboard") || path.startsWith("/admin")) {
-    if (!user) {
+    if (!isAdmin) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
-      return NextResponse.redirect(url);
-    }
-
-    // Authenticated, check role in the Profile table via Supabase client (Edge compatible)
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll();
-          },
-          setAll() {
-            // Read-only inside role verification
-          },
-        },
-      }
-    );
-
-    const { data: profile } = await supabase
-      .from("Profile")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    const role = profile?.role;
-
-    if (role !== "admin") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/";
       return NextResponse.redirect(url);
     }
   }
 
   // Redirect logged-in users away from auth pages
-  if ((path === "/login" || path === "/register") && user) {
+  if ((path === "/login" || path === "/register") && isAdmin) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
-  return supabaseResponse;
+  return NextResponse.next();
 }
 
 export const config = {

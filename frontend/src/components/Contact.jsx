@@ -9,6 +9,7 @@ export default function Contact() {
   const formRef = useRef(null);
   const [formState, setFormState] = useState({ name: "", email: "", message: "" });
   const [status, setStatus] = useState("idle"); // idle | sending | success | error
+  const [errors, setErrors] = useState({}); // validation errors
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -20,6 +21,7 @@ export default function Contact() {
     if (!formState.name || !formState.email || !formState.message) return;
 
     setStatus("sending");
+    setErrors({});
 
     try {
       const response = await fetch("/api/contact", {
@@ -37,6 +39,9 @@ export default function Contact() {
         setFormState({ name: "", email: "", message: "" });
       } else {
         console.error("Erro no envio:", data.message || "Erro desconhecido");
+        if (data.errors) {
+          setErrors(data.errors);
+        }
         setStatus("error");
       }
     } catch (err) {
@@ -134,6 +139,9 @@ export default function Contact() {
                   placeholder="Seu nome"
                   className="w-full px-4 py-3 rounded-xl bg-[#030303] border border-white/5 text-sm text-white placeholder-zinc-700 focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 outline-none transition-all disabled:opacity-50"
                 />
+                {errors.name && (
+                  <span className="text-[10px] text-rose-500 font-mono mt-1 pl-1">{errors.name[0]}</span>
+                )}
               </div>
 
               {/* Email Field */}
@@ -152,6 +160,9 @@ export default function Contact() {
                   placeholder="seuemail@exemplo.com"
                   className="w-full px-4 py-3 rounded-xl bg-[#030303] border border-white/5 text-sm text-white placeholder-zinc-700 focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 outline-none transition-all disabled:opacity-50"
                 />
+                {errors.email && (
+                  <span className="text-[10px] text-rose-500 font-mono mt-1 pl-1">{errors.email[0]}</span>
+                )}
               </div>
 
               {/* Message Field */}
@@ -170,6 +181,9 @@ export default function Contact() {
                   placeholder="Escreva sua mensagem aqui..."
                   className="w-full px-4 py-3 rounded-xl bg-[#030303] border border-white/5 text-sm text-white placeholder-zinc-700 focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 outline-none transition-all resize-none disabled:opacity-50"
                 />
+                {errors.message && (
+                  <span className="text-[10px] text-rose-500 font-mono mt-1 pl-1">{errors.message[0]}</span>
+                )}
               </div>
 
               {/* Submit button */}

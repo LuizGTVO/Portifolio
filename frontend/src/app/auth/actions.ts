@@ -1,78 +1,25 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
-import { loginSchema, registerSchema } from "@/validators/auth";
-import prisma from "@/lib/db";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-export async function login(formData: any) {
-  const validation = loginSchema.safeParse(formData);
-  if (!validation.success) {
-    return { success: false, error: "Dados inválidos." };
+export async function loginAdmin(password: string) {
+  if (password === "admluiz") {
+    const cookieStore = await cookies();
+    cookieStore.set("admin_session", "admluiz", {
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+      sameSite: "lax",
+    });
+    return { success: true };
   }
-
-  const { email, password } = validation.data;
-  const supabase = await createClient();
-
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  redirect("/dashboard");
+  return { success: false, error: "Senha incorreta." };
 }
 
-export async function signup(formData: any) {
-  const validation = registerSchema.safeParse(formData);
-  if (!validation.success) {
-    return { success: false, error: "Dados inválidos." };
-  }
-
-  const { name, email, password } = validation.data;
-  const supabase = await createClient();
-
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        display_name: name,
-      },
-    },
-  });
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  const user = data.user;
-
-  if (user) {
-    try {
-      await prisma.profile.create({
-        data: {
-          id: user.id,
-          email: user.email || email,
-          role: "user",
-        },
-      });
-    } catch (dbError: any) {
-      console.error("Erro ao criar perfil no banco de dados:", dbError);
-    }
-  }
-
-  return { 
-    success: true, 
-    message: "Cadastro realizado com sucesso! Prossiga com o login." 
-  };
+export async function logoutAdmin() {
+  const cookieStore = await cookies();
+  cookieStore.delete("admin_session");
+  redirect("/");
 }
 
-export async function logout() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/login");
-}

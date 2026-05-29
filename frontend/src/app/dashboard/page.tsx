@@ -1,16 +1,13 @@
 import React from "react";
-import { createClient } from "@/utils/supabase/server";
-import { logout } from "@/app/auth/actions";
+import { logoutAdmin } from "@/app/auth/actions";
 import prisma from "@/lib/db";
 import { LayoutDashboard, Mail, LogOut, ShieldAlert, ArrowRight } from "lucide-react";
 import CustomCursor from "@/components/CustomCursor";
 import DashboardProjectsManager from "@/components/DashboardProjectsManager";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   let messageCount = 0;
   let projects: any[] = [];
@@ -49,7 +46,7 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            <form action={logout}>
+            <form action={logoutAdmin}>
               <button
                 type="submit"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/5 bg-white/[0.01] hover:bg-rose-500/10 hover:border-rose-500/20 hover:text-rose-400 text-xs font-semibold text-zinc-400 transition-all duration-300 cursor-pointer"
@@ -92,7 +89,7 @@ export default async function DashboardPage() {
                 </div>
                 <div className="mt-4">
                   <div className="text-sm font-bold text-white truncate max-w-[280px]">
-                    {user?.email || "Administrador"}
+                    Administrador
                   </div>
                   <p className="text-xs text-zinc-500 font-mono tracking-wider mt-1.5 uppercase">Role: Admin</p>
                 </div>

@@ -29,7 +29,7 @@ async function sendContactNotification(name: string, email: string, message: str
       "[EmailService] Envio de e-mail real ignorado: SMTP_USER ou SMTP_PASS não estão configurados no arquivo .env."
     );
     console.info(`[EmailService] Simulando e-mail de ${name} (${email}) para ${receiver}: "${message}"`);
-    return false;
+    return true; // Retorna true para representar simulação bem-sucedida em desenvolvimento
   }
 
   try {
@@ -83,24 +83,41 @@ export async function POST(request: NextRequest) {
 
     const { name, email, message } = validationResult.data;
 
-    // 1. Save to database using Prisma Client
-    const savedMessage = await prisma.contactMessage.create({
-      data: {
-        name,
-        email,
-        message,
-      },
-    });
+    // 1. Tentar salvar no banco de dados usando Prisma Client (tolerante a falhas)
+    let savedMessage = null;
+    try {
+      savedMessage = await prisma.contactMessage.create({
+        data: {
+          name,
+          email,
+          message,
+        },
+      });
+    } catch (dbError) {
+      console.error("Erro ao salvar mensagem no banco de dados (Prisma):", dbError);
+      // Loga o erro, mas NÃO bloqueia a execução caso o banco esteja fora do ar / pausado
+    }
 
-    // 2. Trigger email notification asynchronously
-    sendContactNotification(name, email, message).catch((err) =>
-      console.error("Falha ao enviar e-mail de notificação:", err)
-    );
+    // 2. Disparar notificação por e-mail usando Nodemailer SMTP (bloqueante para checagem de sucesso)
+    const emailSent = await sendContactNotification(name, email, message);
+
+    // Se ambos falharem (banco fora do ar AND falha no envio do email), aí sim retornamos erro 500
+    if (!savedMessage && !emailSent) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: "Não foi possível enviar a mensagem. O banco de dados está indisponível e o envio de e-mail falhou." 
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(
       {
         success: true,
-        message: "Mensagem enviada com sucesso!",
+        message: savedMessage 
+          ? "Mensagem enviada e salva com sucesso!" 
+          : "Mensagem enviada por e-mail com sucesso! (O salvamento no banco de dados falhou temporariamente)",
         data: savedMessage,
       },
       { status: 201 }

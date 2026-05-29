@@ -1,33 +1,32 @@
 "use client";
 
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, LoginInput } from "@/validators/auth";
-import { login } from "@/app/auth/actions";
-import { Lock, Mail, Loader2, ArrowLeft } from "lucide-react";
+import { loginAdmin } from "@/app/auth/actions";
+import { Lock, Loader2, ArrowLeft } from "lucide-react";
 import CustomCursor from "@/components/CustomCursor";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
 export default function LoginPage() {
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
-  });
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!password.trim()) {
+      setError("Por favor, insira a senha de acesso.");
+      return;
+    }
 
-  const onSubmit = async (data: LoginInput) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await login(data);
-      if (res && !res.success) {
+      const res = await loginAdmin(password);
+      if (res.success) {
+        // Redireciona usando window.location para forçar a atualização do middleware
+        window.location.href = "/dashboard";
+      } else {
         setError(res.error || "Ocorreu um erro ao fazer login.");
       }
     } catch (err: any) {
@@ -71,7 +70,7 @@ export default function LoginPage() {
               {/* Header */}
               <div className="text-center">
                 <h1 className="text-2xl font-black text-white tracking-tight">Área Administrativa</h1>
-                <p className="text-xs font-mono text-indigo-400 tracking-wider mt-1.5 uppercase">Login</p>
+                <p className="text-xs font-mono text-indigo-400 tracking-wider mt-1.5 uppercase">Acesso Restrito</p>
               </div>
 
               {error && (
@@ -80,32 +79,11 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-                {/* Email input */}
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="email" className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest pl-1">
-                    E-mail
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-3.5 w-4 h-4 text-zinc-600" />
-                    <input
-                      type="email"
-                      id="email"
-                      placeholder="seuemail@exemplo.com"
-                      disabled={loading}
-                      {...register("email")}
-                      className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#030303] border border-white/5 text-sm text-white placeholder-zinc-700 focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 outline-none transition-all"
-                    />
-                  </div>
-                  {errors.email && (
-                    <span className="text-[10px] text-rose-500 pl-1">{errors.email.message}</span>
-                  )}
-                </div>
-
+              <form onSubmit={onSubmit} className="flex flex-col gap-4">
                 {/* Password input */}
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="password" className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest pl-1">
-                    Senha
+                    Senha de Administrador
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-4 top-3.5 w-4 h-4 text-zinc-600" />
@@ -114,24 +92,22 @@ export default function LoginPage() {
                       id="password"
                       placeholder="••••••••"
                       disabled={loading}
-                      {...register("password")}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#030303] border border-white/5 text-sm text-white placeholder-zinc-700 focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 outline-none transition-all"
                     />
                   </div>
-                  {errors.password && (
-                    <span className="text-[10px] text-rose-500 pl-1">{errors.password.message}</span>
-                  )}
                 </div>
 
                 {/* Submit button */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3.5 mt-2 rounded-xl bg-white text-black font-semibold text-sm hover:bg-zinc-200 hover:shadow-[0_0_20px_rgba(99,102,241,0.25)] transition-all duration-300 disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3.5 mt-2 rounded-xl bg-white text-black font-semibold text-sm hover:bg-zinc-200 hover:shadow-[0_0_20px_rgba(99,102,241,0.25)] transition-all duration-300 disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? (
                     <>
-                      Entrando...
+                      Verificando...
                       <Loader2 className="w-4 h-4 animate-spin" />
                     </>
                   ) : (
@@ -139,14 +115,6 @@ export default function LoginPage() {
                   )}
                 </button>
               </form>
-
-              {/* Toggle to register */}
-              <p className="text-xs text-center text-zinc-500 mt-2">
-                Não tem uma conta?{" "}
-                <Link href="/register" className="text-indigo-400 hover:text-indigo-300 hover:underline transition-colors font-medium">
-                  Cadastre-se aqui
-                </Link>
-              </p>
             </div>
           </div>
         </motion.div>

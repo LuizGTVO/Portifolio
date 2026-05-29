@@ -1,8 +1,10 @@
 import React from "react";
 import prisma from "@/lib/db";
-import { logout } from "@/app/auth/actions";
+import { logoutAdmin } from "@/app/auth/actions";
 import { ArrowLeft, Mail, LogOut, Calendar, User, MessageSquare } from "lucide-react";
 import CustomCursor from "@/components/CustomCursor";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   let messages: any[] = [];
@@ -42,7 +44,7 @@ export default async function AdminPage() {
               </div>
             </div>
 
-            <form action={logout}>
+            <form action={logoutAdmin}>
               <button
                 type="submit"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/5 bg-white/[0.01] hover:bg-rose-500/10 hover:border-rose-500/20 hover:text-rose-400 text-xs font-semibold text-zinc-400 transition-all duration-300 cursor-pointer"

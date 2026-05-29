@@ -4,20 +4,12 @@ import { createClient } from "@/utils/supabase/server";
 import prisma from "@/lib/db";
 import { projectSchema } from "@/validators/projects";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
 async function checkAdmin() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) return false;
-
-  const { data: profile } = await supabase
-    .from("Profile")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  return profile?.role === "admin";
+  const cookieStore = await cookies();
+  const adminToken = cookieStore.get("admin_session")?.value;
+  return adminToken === "admluiz";
 }
 
 export async function createProject(formData: FormData) {
