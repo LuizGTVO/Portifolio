@@ -306,12 +306,13 @@ function ProjectCard({ project, onClick }) {
 export default function Projects() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [allProjects, setAllProjects] = useState(staticProjects);
+  const [visibleCount, setVisibleCount] = useState(6);
 
   useEffect(() => {
     async function loadProjects() {
       try {
         const res = await getProjects();
-        if (res.success && res.projects && res.projects.length > 0) {
+        if (res.success && res.projects) {
           const mapped = res.projects.map((dbProj) => {
             const hash = dbProj.title.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
             const colors = [
@@ -340,7 +341,14 @@ export default function Projects() {
               isDynamic: true
             };
           });
-          setAllProjects(mapped);
+
+          // Filter out static projects that match DB project titles to avoid duplicates
+          const filteredStatic = staticProjects.filter(
+            stProj => !mapped.some(dbProj => dbProj.title.toLowerCase() === stProj.title.toLowerCase())
+          );
+
+          // Combined list: static projects first, DB projects at the end (placed last)
+          setAllProjects([...filteredStatic, ...mapped]);
         }
       } catch (err) {
         console.error("Erro ao carregar projetos:", err);
@@ -361,7 +369,7 @@ export default function Projects() {
 
       {/* Grid of Projects */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {allProjects.map((project) => (
+        {allProjects.slice(0, visibleCount).map((project) => (
           <ProjectCard
             key={project.id}
             project={project}
@@ -369,6 +377,18 @@ export default function Projects() {
           />
         ))}
       </div>
+
+      {/* Show More / Show Less Button */}
+      {allProjects.length > 6 && (
+        <div className="flex justify-center mt-12">
+          <button
+            onClick={() => setVisibleCount(prev => prev === 6 ? allProjects.length : 6)}
+            className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/5 border border-white/10 hover:border-white/20 text-sm font-semibold text-zinc-300 hover:text-white transition-all cursor-pointer shadow-md hover:shadow-indigo-500/10 active:scale-95 duration-200"
+          >
+            {visibleCount === 6 ? "Ver Mais Projetos" : "Ver Menos"}
+          </button>
+        </div>
+      )}
 
       {/* Expandable Project Details Modal Overlay */}
       <AnimatePresence>
