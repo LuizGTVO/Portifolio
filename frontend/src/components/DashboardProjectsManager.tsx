@@ -101,6 +101,27 @@ export default function DashboardProjectsManager({ initialProjects }: Props) {
     }
   };
 
+  const handleGithubUrlChange = (url: string) => {
+    setGithubUrl(url);
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.includes("recipefinder")) {
+      setMediaType("visualizer");
+      setVisualizer("recipefinder");
+    } else if (lowerUrl.includes("clonespotify")) {
+      setMediaType("visualizer");
+      setVisualizer("clonespotify");
+    } else if (lowerUrl.includes("sociallinks")) {
+      setMediaType("visualizer");
+      setVisualizer("sociallinks");
+    } else if (lowerUrl.includes("city-frontend")) {
+      setMediaType("visualizer");
+      setVisualizer("cityfrontend");
+    } else if (lowerUrl.includes("city-backend")) {
+      setMediaType("visualizer");
+      setVisualizer("citybackend");
+    }
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -350,7 +371,7 @@ export default function DashboardProjectsManager({ initialProjects }: Props) {
                   <input
                     type="url"
                     value={githubUrl}
-                    onChange={(e) => setGithubUrl(e.target.value)}
+                    onChange={(e) => handleGithubUrlChange(e.target.value)}
                     placeholder="https://github.com/..."
                     className="w-full px-4 py-3 rounded-xl bg-[#030303] border border-white/5 text-sm text-white placeholder-zinc-700 focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 outline-none transition-all"
                   />

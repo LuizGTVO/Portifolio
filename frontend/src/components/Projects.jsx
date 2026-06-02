@@ -204,13 +204,78 @@ function CityBackendVisualizer() {
   );
 }
 
-function VisualizerResolver({ id = "" }) {
+// Visualizer 6: Terminal Compiler / Logs Simulator (GenericVisualizer)
+function GenericVisualizer({ title = "Project", tags = [] }) {
+  const [logs, setLogs] = useState([]);
+  
+  useEffect(() => {
+    const techStr = tags.slice(0, 3).join(", ") || "Web Tech";
+    const initialLogs = [
+      `$ npm run dev --${title.toLowerCase().replace(/\s+/g, "-")}`,
+      `> initializing bundler...`,
+      `> loaded: ${techStr}`,
+      `● localhost:3000 active`
+    ];
+    setLogs(initialLogs);
+    
+    const interval = setInterval(() => {
+      const endpoints = ["/api/v1/user", "/api/v1/auth", "/index.html", "/assets/main.css", "/api/v1/data"];
+      const randomEndpoint = endpoints[Math.floor(Math.random() * endpoints.length)];
+      const time = (Math.random() * 50 + 5).toFixed(0);
+      setLogs((prev) => {
+        const next = [...prev, `GET ${randomEndpoint} - 200 OK (${time}ms)`];
+        if (next.length > 5) next.shift();
+        return next;
+      });
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [title, tags]);
+
+  return (
+    <div className="w-full h-44 bg-[#050508] rounded-2xl overflow-hidden p-4 border border-white/5 flex flex-col justify-between font-mono text-[9px] text-zinc-400 select-none">
+      <div className="flex items-center justify-between border-b border-white/5 pb-2 text-zinc-600">
+        <span>terminal-{title.toLowerCase().replace(/\s+/g, "-")}.sh</span>
+        <motion.span 
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+          className="text-indigo-400 font-bold"
+        >
+          running
+        </motion.span>
+      </div>
+      
+      <div className="flex-1 py-2 flex flex-col gap-1 overflow-hidden font-mono leading-normal text-left text-zinc-500">
+        {logs.map((log, idx) => {
+          const isCommand = log.startsWith("$");
+          const isSuccess = log.includes("200 OK") || log.includes("active");
+          const colorClass = isCommand ? "text-indigo-400" : isSuccess ? "text-emerald-500" : "text-zinc-500";
+          return (
+            <div key={idx} className={`${colorClass} truncate`}>
+              {log}
+            </div>
+          );
+        })}
+        <div className="flex items-center gap-1 mt-0.5 text-zinc-600">
+          <span>$</span>
+          <motion.span
+            animate={{ opacity: [1, 0, 1] }}
+            transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+            className="w-1 h-3 bg-zinc-600"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VisualizerResolver({ id = "", title = "Project", tags = [] }) {
   if (id === "recipefinder") return <RecipeVisualizer />;
   if (id === "clonespotify") return <SpotifyVisualizer />;
   if (id === "sociallinks") return <LinksVisualizer />;
   if (id === "cityfrontend") return <CityFrontendVisualizer />;
   if (id === "citybackend") return <CityBackendVisualizer />;
-  return <RecipeVisualizer />;
+  return <GenericVisualizer title={title} tags={tags} />;
 }
 
 function ProjectCard({ project, onClick }) {
@@ -266,7 +331,7 @@ function ProjectCard({ project, onClick }) {
             />
           </div>
         ) : (
-          <VisualizerResolver id={project.id} />
+          <VisualizerResolver id={project.id} title={project.title} tags={project.tags} />
         )}
 
         {/* 2. Project Title */}
