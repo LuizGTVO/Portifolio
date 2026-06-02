@@ -325,8 +325,12 @@ export default function Projects() {
             const accentColors = ["#f97316", "#22c55e", "#a855f7", "#3b82f6", "#0d9488"];
             const index = Math.abs(hash) % colors.length;
             
+            const isMock = dbProj.image && dbProj.image.startsWith("mock:");
+            const visualizerId = isMock ? dbProj.image.replace("mock:", "") : "";
+            const originalMock = isMock ? staticProjects.find((p) => p.id === visualizerId) : null;
+
             return {
-              id: dbProj.id,
+              id: isMock ? visualizerId : dbProj.id,
               title: dbProj.title,
               subtitle: dbProj.technologies.slice(0, 3).join(" • "),
               description: dbProj.description,
@@ -335,10 +339,10 @@ export default function Projects() {
               github: dbProj.githubUrl || "",
               live: dbProj.liveUrl || "",
               image: dbProj.image,
-              color: colors[index],
-              accentColor: accentColors[index],
+              color: originalMock ? originalMock.color : colors[index],
+              accentColor: originalMock ? originalMock.accentColor : accentColors[index],
               metric: dbProj.featured ? "Destaque" : (dbProj.technologies[0] || "Web"),
-              isDynamic: true
+              isDynamic: !isMock
             };
           });
 

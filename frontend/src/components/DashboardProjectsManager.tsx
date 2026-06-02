@@ -3,6 +3,7 @@
 import React, { useState, useTransition } from "react";
 import { Plus, Edit2, Trash2, X, ExternalLink, Image as ImageIcon, Loader2 } from "lucide-react";
 import { createProject, updateProject, deleteProject } from "@/app/auth/projectActions";
+import { projects as staticProjects } from "@/data/portfolioData";
 
 const Github = ({ className }: { className?: string }) => (
   <svg
@@ -49,6 +50,8 @@ export default function DashboardProjectsManager({ initialProjects }: Props) {
   const [technologies, setTechnologies] = useState("");
   const [featured, setFeatured] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [mediaType, setMediaType] = useState<"upload" | "visualizer">("upload");
+  const [visualizer, setVisualizer] = useState("");
 
   const openCreateModal = () => {
     setEditingProject(null);
@@ -59,6 +62,8 @@ export default function DashboardProjectsManager({ initialProjects }: Props) {
     setTechnologies("");
     setFeatured(false);
     setImageFile(null);
+    setMediaType("upload");
+    setVisualizer("");
     setError(null);
     setIsModalOpen(true);
   };
@@ -72,8 +77,28 @@ export default function DashboardProjectsManager({ initialProjects }: Props) {
     setTechnologies(project.technologies.join(", "));
     setFeatured(project.featured);
     setImageFile(null);
+    if (project.image && project.image.startsWith("mock:")) {
+      setMediaType("visualizer");
+      setVisualizer(project.image.replace("mock:", ""));
+    } else {
+      setMediaType("upload");
+      setVisualizer("");
+    }
     setError(null);
     setIsModalOpen(true);
+  };
+
+  const handleAutofill = (mockId: string) => {
+    const selected = staticProjects.find(p => p.id === mockId);
+    if (selected) {
+      setTitle(selected.title);
+      setDescription(selected.detailedDescription || selected.description);
+      setGithubUrl(selected.github || "");
+      setLiveUrl(selected.live || "");
+      setTechnologies(selected.tags.join(", "));
+      setMediaType("visualizer");
+      setVisualizer(selected.id);
+    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -88,7 +113,9 @@ export default function DashboardProjectsManager({ initialProjects }: Props) {
     formData.append("technologies", technologies);
     formData.append("featured", featured ? "true" : "false");
     
-    if (imageFile) {
+    if (mediaType === "visualizer") {
+      formData.append("visualizer", visualizer);
+    } else if (imageFile) {
       formData.append("image", imageFile);
     }
 
@@ -165,11 +192,20 @@ export default function DashboardProjectsManager({ initialProjects }: Props) {
               className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-3xl bg-[#09090b] border border-white/5 hover:border-white/10 transition-colors duration-300"
             >
               <div className="flex items-center gap-4">
-                <img
-                  src={proj.image}
-                  alt={proj.title}
-                  className="w-16 h-16 rounded-xl object-cover border border-white/10"
-                />
+                {proj.image && proj.image.startsWith("mock:") ? (
+                  <div className="w-16 h-16 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex flex-col items-center justify-center text-[8px] font-mono text-indigo-400 text-center px-1 font-bold shrink-0">
+                    <span>MOCK</span>
+                    <span className="uppercase text-[6px] text-zinc-500 mt-1 truncate max-w-full">
+                      {proj.image.replace("mock:", "")}
+                    </span>
+                  </div>
+                ) : (
+                  <img
+                    src={proj.image}
+                    alt={proj.title}
+                    className="w-16 h-16 rounded-xl object-cover border border-white/10 shrink-0"
+                  />
+                )}
                 <div>
                   <h4 className="text-sm font-bold text-white flex items-center gap-2">
                     {proj.title}
@@ -255,6 +291,26 @@ export default function DashboardProjectsManager({ initialProjects }: Props) {
 
             <form onSubmit={handleFormSubmit} className="flex flex-col gap-4 max-h-[70vh] overflow-y-auto pr-1">
               
+              {/* Template Select */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest pl-1">
+                  Carregar de um Template do Mock (Opcional)
+                </label>
+                <select
+                  onChange={(e) => {
+                    handleAutofill(e.target.value);
+                    e.target.value = ""; // Reset select
+                  }}
+                  defaultValue=""
+                  className="w-full px-4 py-3 rounded-xl bg-[#030303] border border-white/5 text-sm text-zinc-400 outline-none transition-all focus:border-indigo-500/50 cursor-pointer"
+                >
+                  <option value="" disabled>-- Selecione um template para preenchimento rápido --</option>
+                  {staticProjects.map((p) => (
+                    <option key={p.id} value={p.id}>{p.title} ({p.subtitle})</option>
+                  ))}
+                </select>
+              </div>
+
               {/* Title */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest pl-1">
@@ -330,27 +386,79 @@ export default function DashboardProjectsManager({ initialProjects }: Props) {
                 />
               </div>
 
-              {/* Image Input */}
+              {/* Media Presentation Type */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest pl-1">
-                  Imagem do Projeto {editingProject && "(Deixe vazio para manter a atual)"}
+                  Tipo de Apresentação Visual
                 </label>
-                <div className="relative flex items-center justify-center border border-white/5 rounded-xl bg-[#030303] py-4 px-6 hover:border-white/10 transition-colors">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    required={!editingProject}
-                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                  <div className="flex flex-col items-center gap-1.5 text-zinc-500 text-xs">
-                    <ImageIcon className="w-5 h-5 text-indigo-400" />
-                    <span>
-                      {imageFile ? imageFile.name : "Clique para selecionar a imagem"}
-                    </span>
-                  </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setMediaType("upload")}
+                    className={`py-2.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                      mediaType === "upload"
+                        ? "bg-white text-black border-white"
+                        : "bg-[#030303] text-zinc-400 border-white/5 hover:border-white/10"
+                    }`}
+                  >
+                    Upload de Imagem
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMediaType("visualizer")}
+                    className={`py-2.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                      mediaType === "visualizer"
+                        ? "bg-white text-black border-white"
+                        : "bg-[#030303] text-zinc-400 border-white/5 hover:border-white/10"
+                    }`}
+                  >
+                    Visualizador Interativo
+                  </button>
                 </div>
               </div>
+
+              {/* Conditionally show File Input or Visualizer Dropdown */}
+              {mediaType === "upload" ? (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest pl-1">
+                    Imagem do Projeto {editingProject && "(Deixe vazio para manter a atual)"}
+                  </label>
+                  <div className="relative flex items-center justify-center border border-white/5 rounded-xl bg-[#030303] py-4 px-6 hover:border-white/10 transition-colors">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      required={!editingProject && !visualizer}
+                      onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <div className="flex flex-col items-center gap-1.5 text-zinc-500 text-xs">
+                      <ImageIcon className="w-5 h-5 text-indigo-400" />
+                      <span>
+                        {imageFile ? imageFile.name : "Clique para selecionar a imagem"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest pl-1">
+                    Escolha o Visualizador Interativo
+                  </label>
+                  <select
+                    required
+                    value={visualizer}
+                    onChange={(e) => setVisualizer(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-[#030303] border border-white/5 text-sm text-white outline-none transition-all focus:border-indigo-500/50 cursor-pointer"
+                  >
+                    <option value="" disabled>-- Selecione um visualizador --</option>
+                    <option value="recipefinder">RecipeFinder (Ingredientes e Progresso)</option>
+                    <option value="clonespotify">CloneSpotify (Equalizador de Ondas Sonoras)</option>
+                    <option value="sociallinks">SocialLinks (Árvore de Links Sociais)</option>
+                    <option value="cityfrontend">City Frontend (Dashboard Municipal e Mapa)</option>
+                    <option value="citybackend">City Backend (Fluxo de API REST)</option>
+                  </select>
+                </div>
+              )}
 
               {/* Featured Checkbox */}
               <div className="flex items-center gap-3 py-2 pl-1 select-none">

@@ -26,6 +26,7 @@ export async function createProject(formData: FormData) {
     const rawTechnologies = formData.get("technologies") as string;
     const rawFeatured = formData.get("featured") === "true";
     const imageFile = formData.get("image") as File;
+    const visualizer = formData.get("visualizer") as string;
 
     const validation = projectSchema.safeParse({
       title: rawTitle,
@@ -40,40 +41,48 @@ export async function createProject(formData: FormData) {
       return { success: false, error: "Dados inválidos no formulário." };
     }
 
-    if (!imageFile || imageFile.size === 0) {
-      return { success: false, error: "Por favor, envie uma imagem do projeto." };
+    let imageUrl = "";
+
+    if (visualizer) {
+      imageUrl = `mock:${visualizer}`;
+    } else {
+      if (!imageFile || imageFile.size === 0) {
+        return { success: false, error: "Por favor, envie uma imagem do projeto ou selecione um visualizador." };
+      }
+
+      const supabase = await createClient();
+
+      // 1. Upload image to Supabase Storage bucket "projects"
+      const fileExt = imageFile.name.split(".").pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const fileBuffer = Buffer.from(await imageFile.arrayBuffer());
+
+      const { error: uploadError } = await supabase.storage
+        .from("projects")
+        .upload(fileName, fileBuffer, {
+          contentType: imageFile.type,
+          duplex: "half",
+        } as any);
+
+      if (uploadError) {
+        console.error("Storage upload error:", uploadError);
+        return { success: false, error: "Erro ao subir imagem no Storage. Verifique se o bucket 'projects' existe." };
+      }
+
+      // 2. Get Public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("projects")
+        .getPublicUrl(fileName);
+      
+      imageUrl = publicUrl;
     }
-
-    const supabase = await createClient();
-
-    // 1. Upload image to Supabase Storage bucket "projects"
-    const fileExt = imageFile.name.split(".").pop();
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const fileBuffer = Buffer.from(await imageFile.arrayBuffer());
-
-    const { error: uploadError } = await supabase.storage
-      .from("projects")
-      .upload(fileName, fileBuffer, {
-        contentType: imageFile.type,
-        duplex: "half",
-      } as any);
-
-    if (uploadError) {
-      console.error("Storage upload error:", uploadError);
-      return { success: false, error: "Erro ao subir imagem no Storage. Verifique se o bucket 'projects' existe." };
-    }
-
-    // 2. Get Public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from("projects")
-      .getPublicUrl(fileName);
 
     // 3. Save to database via Prisma
     const project = await prisma.project.create({
       data: {
         title: validation.data.title,
         description: validation.data.description,
-        image: publicUrl,
+        image: imageUrl,
         githubUrl: validation.data.githubUrl || null,
         liveUrl: validation.data.liveUrl || null,
         technologies: validation.data.technologies,
@@ -103,6 +112,7 @@ export async function updateProject(projectId: string, formData: FormData) {
     const rawTechnologies = formData.get("technologies") as string;
     const rawFeatured = formData.get("featured") === "true";
     const imageFile = formData.get("image") as File;
+    const visualizer = formData.get("visualizer") as string;
 
     const validation = projectSchema.safeParse({
       title: rawTitle,
@@ -129,8 +139,21 @@ export async function updateProject(projectId: string, formData: FormData) {
 
     let imageUrl = existingProject.image;
 
-    // If new image file is provided
-    if (imageFile && imageFile.size > 0) {
+    if (visualizer) {
+      imageUrl = `mock:${visualizer}`;
+      
+      // Delete old image from Storage if it was an uploaded image
+      if (existingProject.image && !existingProject.image.startsWith("mock:")) {
+        try {
+          const oldFileName = existingProject.image.split("/").pop();
+          if (oldFileName) {
+            await supabase.storage.from("projects").remove([oldFileName]);
+          }
+        } catch (delErr) {
+          console.warn("Could not delete old image:", delErr);
+        }
+      }
+    } else if (imageFile && imageFile.size > 0) {
       const fileExt = imageFile.name.split(".").pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const fileBuffer = Buffer.from(await imageFile.arrayBuffer());
@@ -152,14 +175,16 @@ export async function updateProject(projectId: string, formData: FormData) {
 
       imageUrl = publicUrl;
 
-      // Delete the old image file
-      try {
-        const oldFileName = existingProject.image.split("/").pop();
-        if (oldFileName) {
-          await supabase.storage.from("projects").remove([oldFileName]);
+      // Delete the old image file if it wasn't a mock
+      if (existingProject.image && !existingProject.image.startsWith("mock:")) {
+        try {
+          const oldFileName = existingProject.image.split("/").pop();
+          if (oldFileName) {
+            await supabase.storage.from("projects").remove([oldFileName]);
+          }
+        } catch (delErr) {
+          console.warn("Could not delete old image:", delErr);
         }
-      } catch (delErr) {
-        console.warn("Could not delete old image:", delErr);
       }
     }
 
